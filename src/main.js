@@ -9,11 +9,12 @@ const searchForm = document.getElementById('search-form');
 const searchInput = document.getElementById('search-input');
 const loader = document.querySelector('.loader');
 
-searchForm.addEventListener('submit', async e => {
+searchForm.addEventListener('submit', e => {
   e.preventDefault();
   const keyword = searchInput.value.trim();
   if (!keyword) {
     iziToast.error({
+      position: 'topRight',
       title: 'Error',
       message: 'Please enter a keyword for search.',
     });
@@ -21,28 +22,32 @@ searchForm.addEventListener('submit', async e => {
   }
   loader.style.display = 'block'; // Показати індикатор завантаження
   clearGallery(); // Очистити галерею перед новим пошуком
-  try {
-    const images = await fetchImages(keyword);
-    if (images.length === 0) {
-      iziToast.info({
-        title: 'Info',
+  fetchImages(keyword)
+    .then(images => {
+      if (images.length === 0) {
+        iziToast.info({
+          position: 'topRight',
+          title: 'Info',
+          message:
+            'Sorry, there are no images matching your search query. Please try again!',
+        });
+      } else {
+        renderImages(images);
+        // Після додавання нових елементів до списку зображень викликаємо метод refresh()
+        const lightbox = new SimpleLightbox('[data-lightbox]');
+        lightbox.refresh();
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching images:', error);
+      iziToast.error({
+        position: 'topRight',
+        title: 'Error',
         message:
-          'Sorry, there are no images matching your search query. Please try again!',
+          'An error occurred while fetching images. Please try again later.',
       });
-    } else {
-      renderImages(images);
-      // Після додавання нових елементів до списку зображень викликаємо метод refresh()
-      const lightbox = new SimpleLightbox('[data-lightbox]');
-      lightbox.refresh();
-    }
-  } catch (error) {
-    console.error('Error fetching images:', error);
-    iziToast.error({
-      title: 'Error',
-      message:
-        'An error occurred while fetching images. Please try again later.',
+    })
+    .finally(() => {
+      loader.style.display = 'none'; // Приховати індикатор завантаження
     });
-  } finally {
-    loader.style.display = 'none'; // Приховати індикатор завантаження
-  }
 });
