@@ -3,14 +3,18 @@ import 'izitoast/dist/css/iziToast.min.css';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 import { fetchImages } from '../src/js/pixabay-api.js';
-import { clearGallery, renderImages } from '../src/js/render-functions.js';
+import { clearGallery, createMarkup } from '../src/js/render-functions.js';
 
+const lightbox = new SimpleLightbox('.gallery a', {
+  captionsData: 'alt',
+  captionDelay: 250,
+});
 const searchForm = document.getElementById('search-form');
 const searchInput = document.getElementById('search-input');
 const loader = document.querySelector('.loader');
 
-searchForm.addEventListener('submit', e => {
-  e.preventDefault();
+searchForm.addEventListener('submit', event => {
+  event.preventDefault();
   const keyword = searchInput.value.trim();
   if (!keyword) {
     iziToast.error({
@@ -20,8 +24,8 @@ searchForm.addEventListener('submit', e => {
     });
     return;
   }
-  loader.style.display = 'block'; // Показати індикатор завантаження
-  clearGallery(); // Очистити галерею перед новим пошуком
+  loader.style.display = 'block';
+  clearGallery();
   fetchImages(keyword)
     .then(images => {
       if (images.length === 0) {
@@ -32,9 +36,7 @@ searchForm.addEventListener('submit', e => {
             'Sorry, there are no images matching your search query. Please try again!',
         });
       } else {
-        renderImages(images);
-        // Після додавання нових елементів до списку зображень викликаємо метод refresh()
-        const lightbox = new SimpleLightbox('[data-lightbox]');
+        createMarkup(images);
         lightbox.refresh();
       }
     })
@@ -48,6 +50,6 @@ searchForm.addEventListener('submit', e => {
       });
     })
     .finally(() => {
-      loader.style.display = 'none'; // Приховати індикатор завантаження
+      loader.style.display = 'none';
     });
 });
